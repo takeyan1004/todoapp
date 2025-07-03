@@ -502,11 +502,11 @@
         class MockAPI {
             constructor() {
                 this.baseURL = 'https://api.todoapp.com';
-                this.delay = 500; // Simulate network delay
+                this.defaultDelay = 500; // Simulate network delay
             }
 
             // Simulate API delay
-            async delay(ms = this.delay) {
+            delay(ms = this.defaultDelay) {
                 return new Promise(resolve => setTimeout(resolve, ms));
             }
 
