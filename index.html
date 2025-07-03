@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App - Full Stack Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+            height: calc(100vh - 40px);
+        }
+
+        .auth-panel {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .main-app {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .user-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .loading {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .auth-form {
+            text-align: center;
+        }
+
+        .auth-form h2 {
+            margin-bottom: 30px;
+            color: #333;
+            font-weight: 300;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .auth-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .auth-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .auth-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .switch-auth {
+            color: #667eea;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .todo-input-container {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .todo-input-wrapper {
+            display: flex;
+            gap: 10px;
+        }
+
+        .todo-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .todo-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .add-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .add-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .add-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .todo-list {
+            flex: 1;
+            padding: 20px 30px 30px;
+            overflow-y: auto;
+            min-height: 200px;
+        }
+
+        .todo-item {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s ease;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .todo-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .todo-item.completed {
+            background: #f8f9fa;
+            opacity: 0.7;
+        }
+
+        .todo-item.completed .todo-text {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+
+        .todo-checkbox {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #667eea;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .todo-checkbox.checked {
+            background: #667eea;
+        }
+
+        .todo-checkbox.checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .todo-text {
+            flex: 1;
+            font-size: 1.1rem;
+            color: #333;
+        }
+
+        .todo-meta {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-left: auto;
+            margin-right: 10px;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+            transform: scale(1.05);
+        }
+
+        .delete-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .stats {
+            background: #f8f9fa;
+            padding: 20px 30px;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+
+        .sync-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .sync-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #28a745;
+            animation: pulse 2s infinite;
+        }
+
+        .sync-indicator.syncing {
+            background: #ffc107;
+        }
+
+        .sync-indicator.error {
+            background: #dc3545;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        .notification.error {
+            background: #dc3545;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .app-container {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .auth-panel {
+                order: 1;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .user-info {
+                position: static;
+                justify-content: center;
+                margin-top: 10px;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="auth-panel" id="authPanel">
+            <div class="auth-form">
+                <h2 id="authTitle">ログイン</h2>
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 10px; margin-bottom: 20px; font-size: 0.9rem;">
+                    <strong>🎯 デモアカウント</strong><br>
+                    メール: <code>demo@example.com</code><br>
+                    パスワード: <code>123456</code>
+                </div>
+                <form id="authForm">
+                    <div class="form-group">
+                        <input type="email" class="form-input" id="email" placeholder="メールアドレス" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" class="form-input" id="password" placeholder="パスワード" required>
+                    </div>
+                    <button type="submit" class="auth-btn" id="authSubmit">ログイン</button>
+                </form>
+                <p>
+                    <span id="authSwitchText">アカウントをお持ちでない方は</span>
+                    <span class="switch-auth" id="authSwitch">新規登録</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="main-app hidden" id="mainApp">
+            <div class="header">
+                <h1>My Tasks</h1>
+                <p>Stay organized and productive</p>
+                <div class="user-info">
+                    <span id="currentUser">user@example.com</span>
+                    <button class="logout-btn" onclick="logout()">ログアウト</button>
+                </div>
+                <div class="loading" id="loadingIndicator">同期中...</div>
+            </div>
+
+            <div class="todo-input-container">
+                <div class="todo-input-wrapper">
+                    <input 
+                        type="text" 
+                        class="todo-input" 
+                        placeholder="新しいタスクを入力..."
+                        id="todoInput"
+                        maxlength="100"
+                    >
+                    <button class="add-btn" onclick="addTodo()" id="addBtn">追加</button>
+                </div>
+            </div>
+
+            <div class="todo-list" id="todoList">
+                <div class="empty-state" id="emptyState">
+                    <h3>タスクがありません</h3>
+                    <p>上記からタスクを追加してください！</p>
+                </div>
+            </div>
+
+            <div class="stats" id="stats">
+                <div>
+                    <span id="totalTasks">0 tasks</span>
+                    <span> • </span>
+                    <span id="completedTasks">0 completed</span>
+                </div>
+                <div class="sync-status">
+                    <div class="sync-indicator" id="syncIndicator"></div>
+                    <span id="syncStatus">同期済み</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock Backend API Simulation
+        class MockAPI {
+            constructor() {
+                this.baseURL = 'https://api.todoapp.com';
+                this.delay = 500; // Simulate network delay
+            }
+
+            // Simulate API delay
+            async delay(ms = this.delay) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            // Mock authentication
+            async login(email, password) {
+                await this.delay();
+                
+                // Simple validation for demo
+                if (!email || password.length < 6) {
+                    throw new Error('メールアドレスとパスワード（6文字以上）を入力してください');
+                }
+                
+                // Check if user is registered
+                const registeredUsers = JSON.parse(localStorage.getItem('registered_users') || '[]');
+                if (!registeredUsers.includes(email)) {
+                    throw new Error('このメールアドレスは登録されていません');
+                }
+                
+                const token = btoa(email + ':' + Date.now());
+                
+                // Set consistent user ID for demo account
+                let userId = Math.floor(Math.random() * 1000000);
+                if (email === 'demo@example.com') {
+                    userId = 123456; // Fixed ID for demo user
+                }
+                
+                const user = {
+                    id: userId,
+                    email: email,
+                    token: token
+                };
+                
+                localStorage.setItem('auth_token', token);
+                localStorage.setItem('user_data', JSON.stringify(user));
+                
+                return { success: true, user, token };
+            }
+
+            async register(email, password) {
+                await this.delay();
+                
+                // Simple validation
+                if (!email || password.length < 6) {
+                    throw new Error('メールアドレスとパスワード（6文字以上）を入力してください');
+                }
+                
+                // Check if user exists (mock)
+                const existingUsers = JSON.parse(localStorage.getItem('registered_users') || '[]');
+                if (existingUsers.includes(email)) {
+                    throw new Error('このメールアドレスは既に登録されています');
+                }
+                
+                // Register new user
+                existingUsers.push(email);
+                localStorage.setItem('registered_users', JSON.stringify(existingUsers));
+                
+                // Create user session
+                const token = btoa(email + ':' + Date.now());
+                const user = {
+                    id: Math.floor(Math.random() * 1000000),
+                    email: email,
+                    token: token,
+                    createdAt: new Date().toISOString()
+                };
+                
+                localStorage.setItem('auth_token', token);
+                localStorage.setItem('user_data', JSON.stringify(user));
+                
+                return { success: true, user, token };
+            }
+
+            async logout() {
+                await this.delay(200);
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('user_data');
+                return { success: true };
+            }
+
+            // Mock todo operations
+            async getTodos() {
+                await this.delay();
+                const userData = JSON.parse(localStorage.getItem('user_data'));
+                if (!userData) throw new Error('Not authenticated');
+                
+                const todos = JSON.parse(localStorage.getItem('todos_' + userData.id) || '[]');
+                return todos;
+            }
+
+            async createTodo(text) {
+                await this.delay();
+                const userData = JSON.parse(localStorage.getItem('user_data'));
+                if (!userData) throw new Error('Not authenticated');
+                
+                const todos = JSON.parse(localStorage.getItem('todos_' + userData.id) || '[]');
+                const newTodo = {
+                    id: Date.now(),
+                    text: text,
+                    completed: false,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    userId: userData.id
+                };
+                
+                todos.push(newTodo);
+                localStorage.setItem('todos_' + userData.id, JSON.stringify(todos));
+                
+                return newTodo;
+            }
+
+            async updateTodo(id, updates) {
+                await this.delay();
+                const userData = JSON.parse(localStorage.getItem('user_data'));
+                if (!userData) throw new Error('Not authenticated');
+                
+                const todos = JSON.parse(localStorage.getItem('todos_' + userData.id) || '[]');
+                const todoIndex = todos.findIndex(todo => todo.id === id);
+                
+                if (todoIndex === -1) throw new Error('Todo not found');
+                
+                todos[todoIndex] = {
+                    ...todos[todoIndex],
+                    ...updates,
+                    updatedAt: new Date().toISOString()
+                };
+                
+                localStorage.setItem('todos_' + userData.id, JSON.stringify(todos));
+                
+                return todos[todoIndex];
+            }
+
+            async deleteTodo(id) {
+                await this.delay();
+                const userData = JSON.parse(localStorage.getItem('user_data'));
+                if (!userData) throw new Error('Not authenticated');
+                
+                const todos = JSON.parse(localStorage.getItem('todos_' + userData.id) || '[]');
+                const filteredTodos = todos.filter(todo => todo.id !== id);
+                
+                localStorage.setItem('todos_' + userData.id, JSON.stringify(filteredTodos));
+                
+                return { success: true };
+            }
+        }
+
+        // Application state
+        let currentUser = null;
+        let todos = [];
+        let isAuthMode = true;
+        const api = new MockAPI();
+
+        // UI Elements
+        const authPanel = document.getElementById('authPanel');
+        const mainApp = document.getElementById('mainApp');
+        const authForm = document.getElementById('authForm');
+        const authTitle = document.getElementById('authTitle');
+        const authSubmit = document.getElementById('authSubmit');
+        const authSwitch = document.getElementById('authSwitch');
+        const authSwitchText = document.getElementById('authSwitchText');
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDemoData();
+            checkAuthStatus();
+            setupEventListeners();
+        });
+
+        // Initialize demo data for easy testing
+        function initializeDemoData() {
+            // Create demo users if not exists
+            const registeredUsers = JSON.parse(localStorage.getItem('registered_users') || '[]');
+            
+            if (!registeredUsers.includes('demo@example.com')) {
+                registeredUsers.push('demo@example.com');
+                localStorage.setItem('registered_users', JSON.stringify(registeredUsers));
+                
+                // Create demo todos for the demo user
+                const demoTodos = [
+                    {
+                        id: 1,
+                        text: 'プロジェクトの企画書を作成する',
+                        completed: false,
+                        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+                        updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+                        userId: 123456
+                    },
+                    {
+                        id: 2,
+                        text: 'チームミーティングの準備',
+                        completed: true,
+                        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+                        updatedAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
+                        userId: 123456
+                    },
+                    {
+                        id: 3,
+                        text: '新機能のユーザーテスト',
+                        completed: false,
+                        createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+                        updatedAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+                        userId: 123456
+                    },
+                    {
+                        id: 4,
+                        text: 'データベースの最適化',
+                        completed: false,
+                        createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+                        updatedAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+                        userId: 123456
+                    },
+                    {
+                        id: 5,
+                        text: 'API仕様書の更新',
+                        completed: true,
+                        createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+                        updatedAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+                        userId: 123456
+                    }
+                ];
+                
+                localStorage.setItem('todos_123456', JSON.stringify(demoTodos));
+            }
+        }
+
+        function checkAuthStatus() {
+            const token = localStorage.getItem('auth_token');
+            const userData = localStorage.getItem('user_data');
+            
+            if (token && userData) {
+                currentUser = JSON.parse(userData);
+                showMainApp();
+                loadTodos();
+            } else {
+                showAuthPanel();
+            }
+        }
+
+        function setupEventListeners() {
+            authForm.addEventListener('submit', handleAuth);
+            authSwitch.addEventListener('click', toggleAuthMode);
+            
+            document.getElementById('todoInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addTodo();
+                }
+            });
+        }
+
+        function toggleAuthMode() {
+            isAuthMode = !isAuthMode;
+            
+            if (isAuthMode) {
+                authTitle.textContent = 'ログイン';
+                authSubmit.textContent = 'ログイン';
+                authSwitchText.textContent = 'アカウントをお持ちでない方は';
+                authSwitch.textContent = '新規登録';
+            } else {
+                authTitle.textContent = '新規登録';
+                authSubmit.textContent = '新規登録';
+                authSwitchText.textContent = 'すでにアカウントをお持ちの方は';
+                authSwitch.textContent = 'ログイン';
+            }
+        }
+
+        async function handleAuth(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            setLoading(true);
+            setSyncStatus('syncing', '認証中...');
+            
+            try {
+                if (isAuthMode) {
+                    const result = await api.login(email, password);
+                    currentUser = result.user;
+                    showNotification('ログインしました！');
+                } else {
+                    const result = await api.register(email, password);
+                    currentUser = result.user;
+                    showNotification('アカウントを作成しました！');
+                }
+                
+                showMainApp();
+                loadTodos();
+                
+            } catch (error) {
+                showNotification(error.message, 'error');
+                setSyncStatus('error', 'エラー');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        async function logout() {
+            setLoading(true);
+            setSyncStatus('syncing', 'ログアウト中...');
+            
+            try {
+                await api.logout();
+                currentUser = null;
+                todos = [];
+                showAuthPanel();
+                showNotification('ログアウトしました');
+            } catch (error) {
+                showNotification(error.message, 'error');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function showAuthPanel() {
+            authPanel.classList.remove('hidden');
+            mainApp.classList.add('hidden');
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        function showMainApp() {
+            authPanel.classList.add('hidden');
+            mainApp.classList.remove('hidden');
+            document.getElementById('currentUser').textContent = currentUser.email;
+            setSyncStatus('synced', '同期済み');
+        }
+
+        async function loadTodos() {
+            setSyncStatus('syncing', '読み込み中...');
+            
+            try {
+                todos = await api.getTodos();
+                renderTodos();
+                setSyncStatus('synced', '同期済み');
+            } catch (error) {
+                showNotification(error.message, 'error');
+                setSyncStatus('error', 'エラー');
+            }
+        }
+
+        async function addTodo() {
+            const input = document.getElementById('todoInput');
+            const text = input.value.trim();
+            
+            if (text === '') {
+                input.focus();
+                return;
+            }
+
+            setLoading(true);
+            setSyncStatus('syncing', '保存中...');
+            
+            try {
+                const newTodo = await api.createTodo(text);
+                todos.push(newTodo);
+                input.value = '';
+                renderTodos();
+                showNotification('タスクを追加しました');
+                setSyncStatus('synced', '同期済み');
+            } catch (error) {
+                showNotification(error.message, 'error');
+                setSyncStatus('error', 'エラー');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        async function toggleTodo(id) {
+            const todo = todos.find(t => t.id === id);
+            if (!todo) return;
+            
+            setSyncStatus('syncing', '更新中...');
+            
+            try {
+                const updatedTodo = await api.updateTodo(id, { completed: !todo.completed });
+                const index = todos.findIndex(t => t.id === id);
+                todos[index] = updatedTodo;
+                renderTodos();
+                setSyncStatus('synced', '同期済み');
+            } catch (error) {
+                showNotification(error.message, 'error');
+                setSyncStatus('error', 'エラー');
+            }
+        }
+
+        async function deleteTodo(id) {
+            setSyncStatus('syncing', '削除中...');
+            
+            try {
+                await api.deleteTodo(id);
+                todos = todos.filter(todo => todo.id !== id);
+                renderTodos();
+                showNotification('タスクを削除しました');
+                setSyncStatus('synced', '同期済み');
+            } catch (error) {
+                showNotification(error.message, 'error');
+                setSyncStatus('error', 'エラー');
+            }
+        }
+
+        function renderTodos() {
+            const todoList = document.getElementById('todoList');
+            const stats = document.getElementById('stats');
+
+            if (todos.length === 0) {
+                todoList.innerHTML = '<div class="empty-state"><h3>タスクがありません</h3><p>上記からタスクを追加してください！</p></div>';
+                return;
+            }
+
+            const todoHTML = todos.map(todo => {
+                const createdDate = new Date(todo.createdAt).toLocaleString('ja-JP');
+                return `
+                    <div class="todo-item ${todo.completed ? 'completed' : ''}">
+                        <div class="todo-checkbox ${todo.completed ? 'checked' : ''}" 
+                             onclick="toggleTodo(${todo.id})">
+                        </div>
+                        <div class="todo-text">${escapeHtml(todo.text)}</div>
+                        <div class="todo-meta">${createdDate}</div>
+                        <button class="delete-btn" onclick="deleteTodo(${todo.id})">削除</button>
+                    </div>
+                `;
+            }).join('');
+
+            todoList.innerHTML = todoHTML;
+            updateStats();
+        }
+
+        function updateStats() {
+            const totalTasks = todos.length;
+            const completedCount = todos.filter(todo => todo.completed).length;
+            
+            document.getElementById('totalTasks').textContent = `${totalTasks} tasks`;
+            document.getElementById('completedTasks').textContent = `${completedCount} completed`;
+        }
+
+        function setLoading(isLoading) {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const addBtn = document.getElementById('addBtn');
+            const authSubmit = document.getElementById('authSubmit');
+            
+            if (isLoading) {
+                loadingIndicator.classList.add('show');
+                addBtn.disabled = true;
+                authSubmit.disabled = true;
+            } else {
+                loadingIndicator.classList.remove('show');
+                addBtn.disabled = false;
+                authSubmit.disabled = false;
+            }
+        }
+
+        function setSyncStatus(status, message) {
+            const syncIndicator = document.getElementById('syncIndicator');
+            const syncStatus = document.getElementById('syncStatus');
+            
+            syncIndicator.className = 'sync-indicator ' + status;
+            syncStatus.textContent = message;
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
